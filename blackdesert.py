@@ -20,7 +20,7 @@ def setPrice() :
     print(df[df['target']==inputValue])
     
 
-fileName = 'recipe.xlsx'
+fileName = 'recipe.xlsx' 
 
 try :
     df = pd.read_excel(fileName,)
@@ -95,12 +95,6 @@ insertButton = tk.Button(window,text ="AddRecipe", command=addRecipe )
 setPriceButton = tk.Button(window, text = "setPrice", command=setPrice)
 insertButton.pack()
 setPriceButton.pack()
-
-
-
-
-
-
 
 window.mainloop()
 df.to_excel(fileName,index=False ) #remove index  
