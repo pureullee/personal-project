@@ -8,10 +8,24 @@ def addRecipe() :
     
     inputValue = maincookEntry.get()
     inputPrice = mainCookPriceEntry.get()
-    last=len[df] 
-    df.loc[last] = [inputValue] + [(value.get()) for pair in zip(subCookEntries, subCookQuaEntries) for value in pair] +[inputPrice] #pair가 양 값을 가지고 그 pair를 value로 풀어서 get
-    df.loc[df['target']==inputValue, 'price'] = mainCookPriceEntry.get() # 같은 타겟이면 전부 똑같은 가격 설정
-    df.loc[last]['iscook'] = 1 if df.loc[last]['sub1'] != None else 0 #1은 요리, 0은 원재료
+    last=len(df)
+    
+    df.loc[last,'target'] = inputValue
+    #pair가 양 값을 가지고 그 pair를 value로 풀어서 get
+    subCooks = ['sub1', 'sub2', 'sub3', 'sub4', 'sub5']
+    subCooksQua = ['sub1_qua', 'sub2_qua', 'sub3_qua', 'sub4_qua', 'sub5_qua']
+    df.loc[last, subCooks] = [value.get() for value in subCookEntries]
+    df.loc[last, subCooksQua] = [int(value.get()) if value.get() != '' else '' for value in subCookQuaEntries]
+    #df.loc[last,'sub1':'sub5_qua'] =[(value.get()) for pair in zip(subCookEntries, subCookQuaEntries) for value in pair]
+    df.loc[last,'price']= inputPrice 
+    
+    # 같은 타겟이면 전부 똑같은 가격 설정
+    df.loc[df['target']==inputValue, 'price'] = int(inputPrice)
+    
+    #1은 요리, 0은 원재료
+    df.loc[last,'iscook'] = 0 if df.loc[last]['sub1'] == '' else 1 
+    
+    setCost()   
     print("저장 성공")
     print(df.tail())
     
@@ -21,29 +35,67 @@ def setPrice() :
     df.loc[df['target']==inputValue, 'price'] = mainCookPriceEntry.get() # 같은 타겟이면 전부 똑같은 가격 설정
     print("setPirce")
     print(df[df['target']==inputValue])
+    setCost()
     
-def tracePrice(target) :
-    
-    # 매개변수 target의 값이 target 시리즈에 있는 행에 대해서 iscook 값이 0인, 즉 원재료인경우라면 그 원재료 가격의 평균을 리턴함
-    if df.loc[df['target'] == target,'iscook'].iloc[0] == 0 :
-        return df.loc[df['target']== target,'price'].mean()
-    
-    # iscook 값이 1인경우엔, sub1 부터 sub5 까지 순환하며 다시 재귀적으로 함수를 콜함
-    else :
-        #하위 요리명만을 가진 데이터 프레임을 생성함
-        newDf = df.loc[df['target'] == target, ['sub1','sub2','sub3','sub4','sub5']]
+
+def setCost() : 
+    df['cost'] = df['target'].apply(traceCost)
         
-        #newDf의 길이만큼 각 행에 대해 sub1~sub5까지의 하위 재료를 각각 재귀함수에 넣음
+    
+    
+def traceCost(target) :  # target 요리에 대한 하위 요리의 가격 혹은 코스트 값을 기반으로 target 요리의 코스트를 추정하는 함수
+    #target 요리가 있는 행을 추출 
+    targetRow = df.loc[df['target']==target]
+    
+    cost = 0 
+    #아직 등록되지 않은 경우라면
+    if targetRow.empty: return np.nan
+    
+    # 가장 하위 재료인 경우는 가격을 바로 리턴 시킴
+    elif targetRow['iscook'].iloc[0] == 0 :
+        return targetRow['price'].iloc[0]
+    
+    # 요리인데, cost의 값이 이미 존재하는 경우는 그냥 그 요리의 코스트 값을 리턴 
+    elif (targetRow['iscook'].iloc[0] == 1) and not pd.isna(targetRow['cost'].iloc[0]) :
+        return targetRow['cost'].iloc[0]
+    
+    subCooks = ['sub1', 'sub2', 'sub3', 'sub4', 'sub5']
+    subCooksQua = ['sub1_qua', 'sub2_qua', 'sub3_qua', 'sub4_qua', 'sub5_qua']
+
+    #하위 요리, 수량을 각각 선택후
+    for subCook, subCookQua in zip(subCooks, subCooksQua):
+        subCookValue = targetRow[subCook].iloc[0]
+        subCookQuaValue = targetRow[subCookQua].iloc[0]
         
-        for i in range(len(newDf)) :
-            cost = 0
-            for v in newDf.iloc[i] :
-                if v is not np.nan  :
-                    cost += tracePrice(v) 
-            cost //= proficiency
+        if pd.notna(subCookValue):
+            x = traceCost(subCookValue)
+            if x is np.nan:
+                return np.nan
+            else:
+                cost += x * subCookQuaValue
+               
+    return cost//proficiency       
+    # targetRow의 cost 컬럼에 요소의 값에 관계없이 하위 재료부터 새롭게 
+    # 위의 경우가 아니라면 setCost를 수행
+    
+    
+    
+    
+     
+    
+
+        
             
-            df.loc[df['target'] == target, 'cost'] = cost
-            print(df.loc[df['target'] == target, 'cost'])
+    
+        
+    
+    
+    
+    
+    
+    pass
+    
+
                     
             
     
@@ -57,7 +109,7 @@ except FileNotFoundError :
     df = pd.DataFrame(columns=['target','sub1','sub1_qua','sub2','sub2_qua','sub3','sub3_qua','sub4','sub4_qua','sub5','sub5_qua','price', 'cost' 'iscook'], )
 print(df)
 
-tracePrice('채소 볶음')
+
     
 window = tk.Tk()
 window.title("Black Desert Calculation")
