@@ -3,7 +3,7 @@ import pandas as pd
 import tkinter as tk
 import numpy as np
 proficiency = 3
-
+no_data = set([])
 def addRecipe() :
     
     inputValue = maincookEntry.get()
@@ -40,6 +40,7 @@ def setPrice() :
 
 def setCost() : 
     df['cost'] = df['target'].apply(traceCost)
+    
         
     
     
@@ -49,7 +50,9 @@ def traceCost(target) :  # target 요리에 대한 하위 요리의 가격 혹�
     
     cost = 0 
     #아직 등록되지 않은 경우라면
-    if targetRow.empty: return np.nan
+    if targetRow.empty:
+        no_data.add(target)     
+        return np.nan
     
     # 가장 하위 재료인 경우는 가격을 바로 리턴 시킴
     elif targetRow['iscook'].iloc[0] == 0 :
@@ -63,6 +66,7 @@ def traceCost(target) :  # target 요리에 대한 하위 요리의 가격 혹�
     subCooksQua = ['sub1_qua', 'sub2_qua', 'sub3_qua', 'sub4_qua', 'sub5_qua']
 
     #하위 요리, 수량을 각각 선택후
+    checkData = True 
     for subCook, subCookQua in zip(subCooks, subCooksQua):
         subCookValue = targetRow[subCook].iloc[0]
         subCookQuaValue = targetRow[subCookQua].iloc[0]
@@ -70,10 +74,14 @@ def traceCost(target) :  # target 요리에 대한 하위 요리의 가격 혹�
         #subCookValue의 값이 비어 있는게 아니라면    
         if pd.notna(subCookValue):
             x = traceCost(subCookValue)
-            if x is np.nan:
-                return np.nan
-            else:
+            if x is not np.nan:
                 cost += x * subCookQuaValue
+            else :
+                checkData = False
+            
+    if checkData == False : return np.nan 
+            
+                
                
     return cost//proficiency       
     # targetRow의 cost 컬럼에 요소의 값에 관계없이 하위 재료부터 새롭게 
@@ -138,16 +146,16 @@ except FileNotFoundError :
 print(df)
 
 
-    
+setCost()  
 window = tk.Tk()
 window.title("Black Desert Calculation")
-window.geometry("1080x480+200+200")
+window.geometry("720x480+200+200")
 window.resizable(False, False)
 
 top =tk.Label(window, text="황실 납품 이익 최대화 관련 프로그램입니다.\n insert 기능으로 상품의 조합식을 추가 할 수 있습니다. ", width=0, height=0,)
 top.pack()
 
-CookFrame = tk.Frame(window)
+CookFrame = tk.Frame(window, borderwidth=3, relief="solid", pady=10)
 CookFrame.pack()
 
 mainCookFrame = tk.Frame(CookFrame)
@@ -158,8 +166,8 @@ mainCookPrice = tk.Frame(CookFrame)
 mainCookPriceLabel = tk.Label(mainCookPrice, text = "Pirce")
 mainCookPriceEntry = tk.Entry(mainCookPrice)
 
-mainCookFrame.grid(row=0,column=0,padx=3, pady=10)
-mainCookPrice.grid(row=0, column=1, padx=3, pady= 10)
+mainCookFrame.grid(row=0,column=0,padx=3, )
+mainCookPrice.grid(row=0, column=1, padx=3, )
 mainCookLabel.pack(side=tk.TOP)
 maincookEntry.pack(side=tk.BOTTOM )
 mainCookPriceLabel.pack(side=tk.TOP)
@@ -196,15 +204,29 @@ for i in range(0,5):
     subCookEntries.append(subCookEntry)
     subCooksizeLabels.append(subCooksizeLabel)
     subCookQuaEntries.append(subCookQuaEntry)
+    
 
-insertButton = tk.Button(window,text ="AddRecipe", command=addRecipe )
-setPriceButton = tk.Button(window, text = "setPrice", command=setPrice)
-clearButton =  tk.Button(window, text="clear", command=clear)
-searchButton = tk.Button(window, text="search", command=search )
-insertButton.pack()
-setPriceButton.pack()
-clearButton.pack()
-searchButton.pack()
+#Button Frame 부분
+ButtonFrame = tk.Frame(window)
+insertButton = tk.Button(ButtonFrame,text ="AddRecipe", command=addRecipe )
+setPriceButton = tk.Button(ButtonFrame, text = "setPrice", command=setPrice)
+clearButton =  tk.Button(ButtonFrame, text="clear", command=clear)
+searchButton = tk.Button(ButtonFrame, text="search", command=search )
+
+ButtonFrame.pack()
+insertButton.grid(row=0, column=0,padx=3)
+setPriceButton.grid(row=0,column=1,padx=3)
+clearButton.grid(row=0, column=2,padx=3)
+searchButton.grid(row=0,column=3,padx=3)
+
+#데이터가 아직 등록되지 않은 부분에 대한 프레임    
+no_dataFrame = tk.Frame(window)
+no_dataLabel = tk.Label(no_dataFrame, text = "아직 등록 되지 않은 레시피")
+no_datalistLabel = tk.Label(no_dataFrame,text=", ".join(list(no_data)))
+no_dataFrame.pack(pady=10,)
+no_dataLabel.grid(row=0, column=0)
+no_datalistLabel.grid(row=1,column=0)
+
 window.mainloop()
 df.to_excel(fileName,index=False ) #remove index  
     
