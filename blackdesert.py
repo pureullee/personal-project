@@ -67,6 +67,7 @@ def traceCost(target) :  # target 요리에 대한 하위 요리의 가격 혹�
         subCookValue = targetRow[subCook].iloc[0]
         subCookQuaValue = targetRow[subCookQua].iloc[0]
         
+        #subCookValue의 값이 비어 있는게 아니라면    
         if pd.notna(subCookValue):
             x = traceCost(subCookValue)
             if x is np.nan:
@@ -77,28 +78,55 @@ def traceCost(target) :  # target 요리에 대한 하위 요리의 가격 혹�
     return cost//proficiency       
     # targetRow의 cost 컬럼에 요소의 값에 관계없이 하위 재료부터 새롭게 
     # 위의 경우가 아니라면 setCost를 수행
-    
-    
-    
-    
-     
-    
 
+def clear() :
+    #entry 값 초기화
+    maincookEntry.delete(0, tk.END) 
+    mainCookPriceEntry.delete(0, tk.END) 
+    for e in subCookEntries :
+        e.delete(0, tk.END) 
+    for e in subCookQuaEntries:
+        e.delete(0, tk.END) 
+    
+    #focus 이동
+    maincookEntry.focus_set()
+    
+def search() :
+    searchValue = maincookEntry.get()
+    searchWindow = tk.Toplevel(window)
+    searchWindow.title("검색 결과")
+    
+    searchDF = df.loc[df['target'] == searchValue]
+    
+    #label을 맨위에 만듬
+    s_mainLabel = tk.Label(searchWindow, text=searchValue)
+    s_mainLabel.grid(row=0, column=0, padx=3, pady=10)
+    
+    for i in range(len(searchDF)) :
+        #searchDF의 길이는 곧, 검색된 요리 레시피의 개수. row 1에 최초할당후 레시피는2,3에 다음 row는 4
+        s_numberLabel = tk.Label(searchWindow, text=f"요리#{i+1}")
+        s_numberLabel.grid(row=1+i*3, column=0, padx=3, pady=10)
+        #count가 3이 되면 밑 행 쓸 예정
+        count = 0
+        c_count = 0
         
-            
-    
+        subCooks = ['sub1', 'sub2', 'sub3', 'sub4', 'sub5']
+        subCooksQua = ['sub1_qua', 'sub2_qua', 'sub3_qua', 'sub4_qua', 'sub5_qua']
         
-    
-    
-    
-    
-    
-    pass
-    
-
+        for v, n in zip(searchDF.iloc[i][subCooks], searchDF.iloc[i][subCooksQua]):
+            if pd.notna(v) :
+                
+                if count<3 :
+                    s_subLabel = tk.Label(searchWindow, text=f"{v}*{n}")
+                    s_subLabel.grid(row=2+i*3,column=c_count, padx=3, pady=10)
                     
-            
-    
+                else :
+                    s_subLabel = tk.Label(searchWindow, text=f"{v}*{n}")
+                    s_subLabel.grid(row=3+i*3, column=c_count, padx=3, pady=10)
+                    
+                count +=1
+                c_count+=1
+                if c_count == 3 : c_count=0
 
 fileName = 'recipe.xlsx' 
 
@@ -171,8 +199,12 @@ for i in range(0,5):
 
 insertButton = tk.Button(window,text ="AddRecipe", command=addRecipe )
 setPriceButton = tk.Button(window, text = "setPrice", command=setPrice)
+clearButton =  tk.Button(window, text="clear", command=clear)
+searchButton = tk.Button(window, text="search", command=search )
 insertButton.pack()
 setPriceButton.pack()
+clearButton.pack()
+searchButton.pack()
 window.mainloop()
 df.to_excel(fileName,index=False ) #remove index  
     
