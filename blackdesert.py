@@ -117,8 +117,8 @@ def search(searchValue) :
         s_numberLabel.grid(row=1+i*3, column=0, padx=3, pady=10)
         
         # 요리#1 옆에 레시피 삭제 버튼
-        s_numberLabelDrop = tk.Button(searchWindow, text='x' )
-        s_numberLabel.grid(row=1+i*3, column=1, padx=3, pady=10)
+        s_numberLabelDrop = tk.Button(searchWindow, text='x', command=lambda :drop(searchDF.index[i]))
+        s_numberLabelDrop.grid(row=1+i*3, column=1, padx=3, pady=10)
         
         #count가 3이 되면 밑 행 쓸 예정
         count = 0
@@ -146,7 +146,9 @@ def search(searchValue) :
                 c_count+=1
                 if c_count == 3 : c_count=0
                 
-
+def drop(row) :
+    df.drop(row, inplace=True)
+    
                     
                 
 fileName = 'recipe.xlsx' 
