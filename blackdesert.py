@@ -2,6 +2,7 @@
 import pandas as pd
 import tkinter as tk
 import numpy as np
+
 proficiency = 3
 no_data = set([])
 def addRecipe() :
@@ -99,28 +100,35 @@ def clear() :
     #focus 이동
     maincookEntry.focus_set()
     
-def search() :
-    searchValue = maincookEntry.get()
+def search(searchValue) :
+    
     searchWindow = tk.Toplevel(window)
     searchWindow.title("검색 결과")
     
     searchDF = df.loc[df['target'] == searchValue]
     
     #label을 맨위에 만듬
-    s_mainLabel = tk.Label(searchWindow, text=searchValue)
+    s_mainLabel = tk.Label(searchWindow, text=searchValue,)
     s_mainLabel.grid(row=0, column=0, padx=3, pady=10)
     
     for i in range(len(searchDF)) :
         #searchDF의 길이는 곧, 검색된 요리 레시피의 개수. row 1에 최초할당후 레시피는2,3에 다음 row는 4
-        s_numberLabel = tk.Label(searchWindow, text=f"요리#{i+1}")
+        s_numberLabel = tk.Label(searchWindow, text=f"요리#{i+1}",)
         s_numberLabel.grid(row=1+i*3, column=0, padx=3, pady=10)
+        
+        # 요리#1 옆에 레시피 삭제 버튼
+        s_numberLabelDrop = tk.Button(searchWindow, text='x' )
+        s_numberLabel.grid(row=1+i*3, column=1, padx=3, pady=10)
+        
         #count가 3이 되면 밑 행 쓸 예정
         count = 0
         c_count = 0
         
+        #다시, 요리/수량 리스트 
         subCooks = ['sub1', 'sub2', 'sub3', 'sub4', 'sub5']
         subCooksQua = ['sub1_qua', 'sub2_qua', 'sub3_qua', 'sub4_qua', 'sub5_qua']
         
+        #label을 만들고 그 label에 요리명*수량 할당
         for v, n in zip(searchDF.iloc[i][subCooks], searchDF.iloc[i][subCooksQua]):
             if pd.notna(v) :
                 
@@ -131,11 +139,16 @@ def search() :
                 else :
                     s_subLabel = tk.Label(searchWindow, text=f"{v}*{n}")
                     s_subLabel.grid(row=3+i*3, column=c_count, padx=3, pady=10)
+                
+                s_subLabel.bind("<Button-1>", lambda event, value= v: search(value))
                     
                 count +=1
                 c_count+=1
                 if c_count == 3 : c_count=0
+                
 
+                    
+                
 fileName = 'recipe.xlsx' 
 
 try :
@@ -149,7 +162,7 @@ print(df)
 setCost()  
 window = tk.Tk()
 window.title("Black Desert Calculation")
-window.geometry("720x480+200+200")
+window.geometry("680x480+200+200")
 window.resizable(False, False)
 
 top =tk.Label(window, text="황실 납품 이익 최대화 관련 프로그램입니다.\n insert 기능으로 상품의 조합식을 추가 할 수 있습니다. ", width=0, height=0,)
@@ -211,7 +224,7 @@ ButtonFrame = tk.Frame(window)
 insertButton = tk.Button(ButtonFrame,text ="AddRecipe", command=addRecipe )
 setPriceButton = tk.Button(ButtonFrame, text = "setPrice", command=setPrice)
 clearButton =  tk.Button(ButtonFrame, text="clear", command=clear)
-searchButton = tk.Button(ButtonFrame, text="search", command=search )
+searchButton = tk.Button(ButtonFrame, text="search", command= lambda : search(maincookEntry.get()))
 
 ButtonFrame.pack()
 insertButton.grid(row=0, column=0,padx=3)
